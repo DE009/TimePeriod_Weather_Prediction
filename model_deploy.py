@@ -37,7 +37,6 @@ for img,time,weather in test_loader:
         time = time.cuda()
         weather = weather.cuda()
         model = model.cuda()
-        criterion = criterion.cuda()
     pre_wea, pre_time = model(img)
     # pre_wea = model(img)
     _,wea_idx=torch.max(pre_wea,1)  #统计每行最大值，获得下标index
