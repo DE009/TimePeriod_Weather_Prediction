@@ -45,7 +45,8 @@ for i in range(epoch):
         w1_pos=torch.exp(w1)
         w2_pos=torch.exp(w2)
 
-        loss=w1_pos*weather_loss+w2_pos*time_loss     #取两者loss之和，作为损失函数
+        #loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
+        loss=w1_pos*weather_loss+w2_pos*time_loss +(1/w1_pos)+(1/w2_pos)     #取两者loss之和，作为损失函数
 
         loss.backward() #损失函数对参数求偏导（反向传播
         optimizer.step()    #更新参数
@@ -70,3 +71,6 @@ for img,time,weather in valid_loader:
     time_acc += sum(time == time_idx)
     #注：len(dataLoader) dataloader的长度，是指，当前dataset，在指定的batchsize下，可被分成多少个batch，这里的长度的batch的数量。
     print("wea_acc={:6f},time_acc={:6f}".format(wea_acc/len(valid_set),time_acc/len(valid_set)))
+torch.save(model.state_dict(),"../model.pth")
+
+
