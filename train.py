@@ -27,9 +27,18 @@ class WeatherModel(nn.Module):
         weather=self.weather(out)
         time=self.time(out)
         return weather,time
+
+# 定义权重为可学习的权重
+w1 = torch.tensor(1.0, requires_grad=True)
+w2 = torch.tensor(1.0, requires_grad=True)
 model=WeatherModel()
 criterion=nn.CrossEntropyLoss()
-optimizer=optim.SGD(model.parameters(),lr=learning_rate)
+#将模型参数和权重参数放入优化器
+optimizer=optim.SGD([
+    {'params':model.parameters(),},
+    {'params': [w1,w2],}
+],lr=learning_rate)
+
 
 #获取数据
 train_loader,valid_loader,train_set,valid_set=dataloader.dataset_load(basepath=basepath,batch_size=batch_size)
@@ -44,14 +53,19 @@ for i in range(epoch):
             model=model.cuda()
             criterion=criterion.cuda()
         pre_wea,pre_time=model(img)
-        # pre_wea=model(img)
         weather_loss=criterion(pre_wea,weather)
         time_loss=criterion(pre_time,time)
         if iteration %20==0:
             print("weather_loss:{0},time_loss:{1}\n".format(weather_loss,time_loss))
             # print("weather_loss:{0}\n".format(weather_loss))
         optimizer.zero_grad()   #清空梯度
-        loss=weather_loss+time_loss     #取两者loss之和，作为损失函数
+
+#通过指数函数，保证w1和w2一直为正数。
+        w1_pos=torch.exp(w1)
+        w2_pos=torch.exp(w2)
+
+        loss=w1_pos*weather_loss+w2_pos*time_loss     #取两者loss之和，作为损失函数
+
         loss.backward() #损失函数对参数求偏导（反向传播
         optimizer.step()    #更新参数
         iteration+=1
