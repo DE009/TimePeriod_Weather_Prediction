@@ -24,9 +24,8 @@ test_data_pd=pd.DataFrame(test_data)
 test_dataset=dataloader.WeatherData(test_data_pd, basepath=basepath, train=False)
 test_loader=DataLoader(test_dataset,batch_size=batch_size)
 
+#读入模型和参数
 model=weather_model.WeatherModel()
-
-#读入训练参数
 model.load_state_dict(torch.load("./model.pth", map_location=torch.device('cpu')))
 model.eval()
 #模型在test集上做预测
