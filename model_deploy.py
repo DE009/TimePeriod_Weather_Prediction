@@ -42,8 +42,10 @@ for img,time,weather in test_loader:
     # pre_wea = model(img)
     _,wea_idx=torch.max(pre_wea,1)  #统计每行最大值，获得下标index
     _,time_idx=torch.max(pre_time,1)
+    #获取类型str
     wea_str=[weather_onehot[int(x)] for x in wea_idx]
     time_str=[period_onehot[int(x)] for x in time_idx]
+    #将类别保存到结果数据文件中
     for i in range(batch_size):
         print(iteration*batch_size+i,iteration)
         test_data[iteration * batch_size + i]['period']=time_str[i]
