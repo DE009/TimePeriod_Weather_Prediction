@@ -1,9 +1,13 @@
+import time as tm
+
+import matplotlib
 import torch
-from torch import nn,optim
-from torchvision.models import resnet50
-import dataloader,weather_model
-import matplotlib,time
 from matplotlib import pyplot as plt
+from torch import nn, optim
+
+import dataloader
+import weather_model
+
 matplotlib.use('TkAgg')
 
 batch_size=64
@@ -29,7 +33,7 @@ loss_train=[[],[],[]]
 train_loader,valid_loader,train_set,valid_set=dataloader.dataset_load(basepath=basepath,batch_size=batch_size)
 #训练
 print("train begin")
-starttime=time.time()
+starttime=tm.time()
 for i in range(epoch):
     print("----"*2+"epoche:{0}".format(i)+"----"*2+"")
     iteration=0
@@ -63,8 +67,8 @@ for i in range(epoch):
         loss.backward() #损失函数对参数求偏导（反向传播
         optimizer.step()    #更新参数
         iteration+=1
-endtime=time.time()
-print('train ended, time elapse:',starttime-endtime)
+endtime=tm.time()
+print('train ended, time elapse:',endtime-starttime)
 
 #绘制train loss 曲线
 plt.plot(loss_train[0],label='weather_loss')
