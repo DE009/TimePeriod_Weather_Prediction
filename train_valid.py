@@ -123,18 +123,23 @@ def train(batch_size,lr,basepath,epoch,valid=True):
             print("wea_acc={:6f},time_acc={:6f}".format(wea_acc / len(valid_set), time_acc / len(valid_set)))
 
 
-        # print(train_losses)
-        # print(valid_losses)
         train_epoch_loss=np.average(train_losses['total'][-(math.floor(len(train_set)/batch_size)+1):])
-        valid_epoch_loss = np.average(valid_losses['total'][-(math.floor(len(valid_set) / batch_size)+1):])
-        print(
-            "epoch[{0}/{1}]----train_loss:[{2}]----valid_loss:[{3}]"
-            .format(i,epoch,train_epoch_loss,valid_epoch_loss)
-        )
-        early_stop(valid_epoch_loss,model)
-        if early_stop.early_stop:
-            print('early stop in epoch:{}'.format(i))
-            break
+
+        if valid or (i+1)==epoch :
+            valid_epoch_loss = np.average(valid_losses['total'][-(math.floor(len(valid_set) / batch_size)+1):])
+            print(
+                "epoch[{0}/{1}]----train_loss:[{2}]----valid_loss:[{3}]"
+                .format(i,epoch,train_epoch_loss,valid_epoch_loss)
+            )
+            early_stop(valid_epoch_loss,model)
+            if early_stop.early_stop:
+                print('early stop in epoch:{}'.format(i))
+                break
+        else:
+            print(
+                "epoch[{0}/{1}]----train_loss:[{2}]----"
+                .format(i, epoch, train_epoch_loss)
+            )
 
     model.load_state_dict(torch.load('checkpoint.pt'))
     torch.save(model.state_dict(),'model_'+str(valid_epoch_loss)+'.pth')
