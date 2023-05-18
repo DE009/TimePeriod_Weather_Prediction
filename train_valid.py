@@ -13,9 +13,9 @@ from matplotlib import pyplot as plt
 matplotlib.use('TkAgg')
 
 batch_size=64
-learning_rate=0.04
+learning_rate=0.007
 basepath='../data/train_dataset/'
-epoch=1
+epoch=60
 
 #训练和验证放一起，每个epoch，验证一次。
 #每个epoch记录一次loss，绘图，
@@ -30,7 +30,7 @@ def train(batch_size,lr,basepath,epoch,valid=True):
     # 将模型参数和权重参数放入优化器
     optimizer = optim.SGD([
         {'params': model.parameters(), },
-        {'params': [w1, w2], }
+       # {'params': [w1, w2], }
     ], lr=lr)
 
     # 获取数据
@@ -71,11 +71,12 @@ def train(batch_size,lr,basepath,epoch,valid=True):
             optimizer.zero_grad()  # 清空梯度
 
             # 通过指数函数，保证w1和w2一直为正数。
-            w1_pos = torch.exp(w1)
-            w2_pos = torch.exp(w2)
+            # w1_pos = torch.exp(w1)
+            # w2_pos = torch.exp(w2)
 
             # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
-            loss = w1_pos * weather_loss + w2_pos * time_loss + (1 / w1_pos) + (1 / w2_pos)  # 取两者loss之和，作为损失函数
+            # loss = w1_pos * weather_loss + w2_pos * time_loss + (1 / w1_pos) + (1 / w2_pos)  # 取两者loss之和，作为损失函数
+            loss = weather_loss +  time_loss
             loss.backward()  # 损失函数对参数求偏导（反向传播
             optimizer.step()  # 更新参数
             if iteration%20==0:
