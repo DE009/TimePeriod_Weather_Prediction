@@ -59,7 +59,7 @@ def train(batch_size,lr,basepath,epoch):
                 img = img.cuda(non_blocking=True)
                 time = time.cuda(non_blocking=True)
                 weather = weather.cuda(non_blocking=True)
-                model = model.cuda(non_blocking=True)
+                model = model.cuda()
                 criterion = criterion.cuda(non_blocking=True)
             pre_wea, pre_time = model(img)
             weather_loss = criterion(pre_wea, weather)
@@ -90,7 +90,7 @@ def train(batch_size,lr,basepath,epoch):
                 img = img.cuda(non_blocking=True)
                 time = time.cuda(non_blocking=True)
                 weather = weather.cuda(non_blocking=True)
-                model = model.cuda(non_blocking=True)
+                model = model.cuda()
                 criterion = criterion.cuda(non_blocking=True)
             pre_wea, pre_time = model(img)
 
