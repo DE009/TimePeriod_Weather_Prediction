@@ -24,10 +24,13 @@ test_data_pd=pd.DataFrame(test_data)
 test_dataset=dataloader.WeatherData(test_data_pd, basepath=basepath, train=False)
 test_loader=DataLoader(test_dataset,batch_size=batch_size)
 
-model=weather_model.WeatherModel()
+model=weather_model.WeatherModelRes18DeepFc()
 
 #读入训练参数
-model.load_state_dict(torch.load("./model.pth", map_location=torch.device('cpu')))
+if torch.cuda.is_available():
+    model.load_state_dict(torch.load("../model.pth"))
+else:
+    model.load_state_dict(torch.load("../model.pth", map_location=torch.device('cpu')))
 model.eval()
 #模型在test集上做预测
 iteration=0
