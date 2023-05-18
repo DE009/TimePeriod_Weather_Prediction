@@ -13,14 +13,14 @@ from matplotlib import pyplot as plt
 matplotlib.use('TkAgg')
 
 batch_size=64
-learning_rate=0.01
+learning_rate=0.04
 basepath='../data/train_dataset/'
-epoch=60
+epoch=1
 
 #训练和验证放一起，每个epoch，验证一次。
 #每个epoch记录一次loss，绘图，
 #尝试使用早停法
-def train(batch_size,lr,basepath,epoch):
+def train(batch_size,lr,basepath,epoch,valid=True):
     #定义模型、参数、优化器、loss函数
     # 定义权重为可学习的权重
     w1 = torch.tensor(1.0, requires_grad=True)
@@ -86,40 +86,41 @@ def train(batch_size,lr,basepath,epoch):
             train_losses['weather'].append(weather_loss.item())
             train_losses['time'].append(time_loss.item())
 
-        #模型验证
-        model.eval()
-        wea_acc = 0
-        time_acc = 0
-        for img, time, weather in valid_loader:
-            if torch.cuda.is_available():
-                img = img.cuda(non_blocking=True)
-                time = time.cuda(non_blocking=True)
-                weather = weather.cuda(non_blocking=True)
-                model = model.cuda()
-                criterion = criterion.cuda()
-            pre_wea, pre_time = model(img)
+        if valid or (i+1)==epoch:
+            #模型验证
+            model.eval()
+            wea_acc = 0
+            time_acc = 0
+            for img, time, weather in valid_loader:
+                if torch.cuda.is_available():
+                    img = img.cuda(non_blocking=True)
+                    time = time.cuda(non_blocking=True)
+                    weather = weather.cuda(non_blocking=True)
+                    model = model.cuda()
+                    criterion = criterion.cuda()
+                pre_wea, pre_time = model(img)
 
-            weather_loss = criterion(pre_wea, weather)
-            time_loss = criterion(pre_time, time)
-            # #取w1，w2数值（并非tensor）计算总loss
-            # w1_pos = np.exp(w1.item())
-            # w2_pos = np.exp(w2.item())
-            # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
-            loss =weather_loss +time_loss
+                weather_loss = criterion(pre_wea, weather)
+                time_loss = criterion(pre_time, time)
+                # #取w1，w2数值（并非tensor）计算总loss
+                # w1_pos = np.exp(w1.item())
+                # w2_pos = np.exp(w2.item())
+                # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
+                loss =weather_loss +time_loss
 
-            _, wea_idx = torch.max(pre_wea, 1)  # 统计每行最大值，获得下标index
-            _, time_idx = torch.max(pre_time, 1)
-            _, weather = torch.max(weather, 1)
-            _, time = torch.max(time, 1)
-            wea_acc += sum(weather == wea_idx)
-            time_acc += sum(time == time_idx)
-            # 记录本次迭代的loss
-            valid_losses['total'].append(loss.item())
-            valid_losses['weather'].append(weather_loss.item())
-            valid_losses['time'].append(time_loss.item())
+                _, wea_idx = torch.max(pre_wea, 1)  # 统计每行最大值，获得下标index
+                _, time_idx = torch.max(pre_time, 1)
+                _, weather = torch.max(weather, 1)
+                _, time = torch.max(time, 1)
+                wea_acc += sum(weather == wea_idx)
+                time_acc += sum(time == time_idx)
+                # 记录本次迭代的loss
+                valid_losses['total'].append(loss.item())
+                valid_losses['weather'].append(weather_loss.item())
+                valid_losses['time'].append(time_loss.item())
 
-        # 注：len(dataLoader) dataloader的长度，是指，当前dataset，在指定的batchsize下，可被分成多少个batch，这里的长度的batch的数量。
-        print("wea_acc={:6f},time_acc={:6f}".format(wea_acc / len(valid_set), time_acc / len(valid_set)))
+            # 注：len(dataLoader) dataloader的长度，是指，当前dataset，在指定的batchsize下，可被分成多少个batch，这里的长度的batch的数量。
+            print("wea_acc={:6f},time_acc={:6f}".format(wea_acc / len(valid_set), time_acc / len(valid_set)))
 
 
         # print(train_losses)
@@ -158,6 +159,6 @@ def train(batch_size,lr,basepath,epoch):
 
 if __name__ == '__main__':
     freeze_support()
-    train(batch_size,learning_rate,basepath,epoch)
+    train(batch_size,learning_rate,basepath,epoch,valid=False)
 
 
