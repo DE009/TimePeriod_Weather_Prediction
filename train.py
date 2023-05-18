@@ -9,7 +9,7 @@ matplotlib.use('TkAgg')
 batch_size=64
 learning_rate=0.04
 basepath='../data/train_dataset/'
-epoch=40
+epoch=60
 
 
 # 定义权重为可学习的权重

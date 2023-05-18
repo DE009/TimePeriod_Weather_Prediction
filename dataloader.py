@@ -27,13 +27,15 @@ class WeatherData(Dataset):
             transforms.RandomVerticalFlip(),
             transforms.CenterCrop(size=(224,224)),
             transforms.ToTensor(),
-            transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
+            # transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
+            transforms.Normalize([-0.1827,  0.1232,  0.2797],[0.9050, 0.9716, 1.0666]),
         ])
         self.valid_transform=transforms.Compose([
             transforms.Resize(size=(340,340)),
             transforms.CenterCrop(size=(224,224)),
             transforms.ToTensor(),
-            transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
+            # transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
+            transforms.Normalize([-0.1827, 0.1232, 0.2797], [0.9050, 0.9716, 1.0666]),
         ])
         self.basepath=basepath
     #返回数据，（img,period,weather）,按输入的index，返回一个数据以及对应的label
