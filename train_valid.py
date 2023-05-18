@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 matplotlib.use('TkAgg')
 
 batch_size=64
-learning_rate=0.007
+learning_rate=0.009
 basepath='../data/train_dataset/'
 epoch=60
 
@@ -76,7 +76,8 @@ def train(batch_size,lr,basepath,epoch,valid=True):
 
             # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
             # loss = w1_pos * weather_loss + w2_pos * time_loss + (1 / w1_pos) + (1 / w2_pos)  # 取两者loss之和，作为损失函数
-            loss = weather_loss +  time_loss
+            # loss = weather_loss + 1.5* time_loss
+            loss= (1/2)*(torch.log(weather_loss)+torch.log(time_loss))
             loss.backward()  # 损失函数对参数求偏导（反向传播
             optimizer.step()  # 更新参数
             if iteration%20==0:
@@ -107,7 +108,9 @@ def train(batch_size,lr,basepath,epoch,valid=True):
                 # w1_pos = np.exp(w1.item())
                 # w2_pos = np.exp(w2.item())
                 # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
-                loss =weather_loss +time_loss
+                # loss =weather_loss + 1.5* time_loss
+
+                loss = (1 / 2) * (torch.log(weather_loss) + torch.log(time_loss))
 
                 _, wea_idx = torch.max(pre_wea, 1)  # 统计每行最大值，获得下标index
                 _, time_idx = torch.max(pre_time, 1)
@@ -141,23 +144,23 @@ def train(batch_size,lr,basepath,epoch,valid=True):
                 "epoch[{0}/{1}]----train_loss:[{2}]----"
                 .format(i, epoch, train_epoch_loss)
             )
-
-    model.load_state_dict(torch.load('checkpoint.pt'))
+    if valid:
+        model.load_state_dict(torch.load('checkpoint.pt'))
     torch.save(model.state_dict(),'model_'+str(valid_epoch_loss)+'.pth')
     endtime = tm.time()
     print('time elapse{0}'.format(endtime-starttime))
     # 绘制train loss 曲线
-    plt.plot(train_losses['total'], label='weather_loss')
-    plt.plot(train_losses['weather'], label='time_loss')
-    plt.plot(train_losses['time'], label='loss')
+    plt.plot(train_losses['total'], label='total')
+    plt.plot(train_losses['weather'], label='weather_loss')
+    plt.plot(train_losses['time'], label='time_loss')
     plt.xlabel('iteration')
     plt.ylabel('train_loss')
     plt.legend()
     plt.show()
     # 绘制train loss 曲线
-    plt.plot(valid_losses['total'], label='weather_loss')
-    plt.plot(valid_losses['weather'], label='time_loss')
-    plt.plot(valid_losses['time'], label='loss')
+    plt.plot(valid_losses['total'], label='loss')
+    plt.plot(valid_losses['weather'], label='weather_loss')
+    plt.plot(valid_losses['time'], label='time_loss')
     plt.xlabel('iteration')
     plt.ylabel('valid_loss')
     plt.legend()
