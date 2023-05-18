@@ -15,7 +15,7 @@ matplotlib.use('TkAgg')
 batch_size=64
 learning_rate=0.009
 basepath='../data/train_dataset/'
-epoch=60
+epoch=80
 
 #训练和验证放一起，每个epoch，验证一次。
 #每个epoch记录一次loss，绘图，
@@ -77,7 +77,9 @@ def train(batch_size,lr,basepath,epoch,valid=True):
             # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
             # loss = w1_pos * weather_loss + w2_pos * time_loss + (1 / w1_pos) + (1 / w2_pos)  # 取两者loss之和，作为损失函数
             # loss = weather_loss + 1.5* time_loss
-            loss= (1/2)*(torch.log(weather_loss)+torch.log(time_loss))
+            weather_loss=weather_loss/(weather_loss+time_loss)
+            time_loss=time_loss/(weather_loss+time_loss)
+            loss=- (1/2)*(torch.log(weather_loss)+torch.log(time_loss))
             loss.backward()  # 损失函数对参数求偏导（反向传播
             optimizer.step()  # 更新参数
             if iteration%20==0:
@@ -110,7 +112,9 @@ def train(batch_size,lr,basepath,epoch,valid=True):
                 # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
                 # loss =weather_loss + 1.5* time_loss
 
-                loss = (1 / 2) * (torch.log(weather_loss) + torch.log(time_loss))
+                weather_loss = weather_loss / (weather_loss + time_loss)
+                time_loss = time_loss / (weather_loss + time_loss)
+                loss =- (1 / 2) * (torch.log(weather_loss) + torch.log(time_loss))
 
                 _, wea_idx = torch.max(pre_wea, 1)  # 统计每行最大值，获得下标index
                 _, time_idx = torch.max(pre_time, 1)
@@ -168,6 +172,6 @@ def train(batch_size,lr,basepath,epoch,valid=True):
 
 if __name__ == '__main__':
     freeze_support()
-    train(batch_size,learning_rate,basepath,epoch,valid=False)
+    train(batch_size,learning_rate,basepath,epoch,valid=True)
 
 
