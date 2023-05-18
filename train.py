@@ -11,9 +11,9 @@ import weather_model
 matplotlib.use('TkAgg')
 
 batch_size=64
-learning_rate=0.04
+learning_rate=0.02
 basepath='../data/train_dataset/'
-epoch=60
+epoch=20
 
 
 # 定义权重为可学习的权重

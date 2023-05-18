@@ -72,6 +72,6 @@ def dataset_load(basepath,batch_size):
     valid_set=WeatherData(valid_labels,basepath,train=False)
     #生成训练和验证集，用random_split函数
     # train_set,valid_set=torch.utils.data.random_split(dataset,[int(0.8*len(dataset)),int(0.2*len(dataset))])
-    train_loader=DataLoader(train_set,batch_size=batch_size,shuffle=True,pin_memory=True,num_workers=2)
-    valid_loader=DataLoader(valid_set,batch_size=batch_size,shuffle=True,pin_memory=True,num_workers=2)
+    train_loader=DataLoader(train_set,batch_size=batch_size,shuffle=True,pin_memory=True,num_workers=4)
+    valid_loader=DataLoader(valid_set,batch_size=batch_size,shuffle=True,pin_memory=True,num_workers=4)
     return train_loader,valid_loader,train_set,valid_set
