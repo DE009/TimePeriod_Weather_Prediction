@@ -56,11 +56,11 @@ def train(batch_size,lr,basepath,epoch):
     for i in range(epoch):
         for img, time, weather in train_loader:
             if torch.cuda.is_available():
-                img = img.cuda()
-                time = time.cuda()
-                weather = weather.cuda()
+                img = img.cuda(non_blocking=True)
+                time = time.cuda(non_blocking=True)
+                weather = weather.cuda(non_blocking=True)
                 model = model.cuda()
-                criterion = criterion.cuda()
+                criterion = criterion.cuda(non_blocking=True)
             pre_wea, pre_time = model(img)
             weather_loss = criterion(pre_wea, weather)
             time_loss = criterion(pre_time, time)
@@ -87,11 +87,11 @@ def train(batch_size,lr,basepath,epoch):
         time_acc = 0
         for img, time, weather in valid_loader:
             if torch.cuda.is_available():
-                img = img.cuda()
-                time = time.cuda()
-                weather = weather.cuda()
+                img = img.cuda(non_blocking=True)
+                time = time.cuda(non_blocking=True)
+                weather = weather.cuda(non_blocking=True)
                 model = model.cuda()
-                criterion = criterion.cuda()
+                criterion = criterion.cuda(non_blocking=True)
             pre_wea, pre_time = model(img)
 
             weather_loss = criterion(pre_wea, weather)
