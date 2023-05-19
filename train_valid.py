@@ -1,9 +1,10 @@
 import math
 from multiprocessing import freeze_support
-
+import data_prefetcher
 import EarlyStop
 import torch
 from torch import nn,optim
+from torch.cuda.amp import autocast,GradScaler
 import numpy as np
 from torchvision.models import resnet50
 import dataloader,weather_model
@@ -13,13 +14,10 @@ from matplotlib import pyplot as plt
 matplotlib.use('TkAgg')
 
 batch_size=16
-learning_rate=0.005
+learning_rate=0.008 #last_best:0.005,80
 basepath='../data/train_dataset/'
-epoch=100
+epoch=90
 
-#训练和验证放一起，每个epoch，验证一次。
-#每个epoch记录一次loss，绘图，
-#尝试使用早停法
 def train(batch_size,lr,basepath,epoch,valid=True):
     #定义模型、参数、优化器、loss函数
     # 定义权重为可学习的权重
@@ -44,6 +42,7 @@ def train(batch_size,lr,basepath,epoch,valid=True):
     train_set,\
     valid_set = dataloader.dataset_load(basepath=basepath, batch_size=batch_size)
 
+
     #初始化loss记录
     train_losses={
         'total':[],
@@ -55,6 +54,8 @@ def train(batch_size,lr,basepath,epoch,valid=True):
         'weather':[],
         'time':[]
     }
+    scaler=GradScaler()
+
     #初始化早停工具类
     early_stop=EarlyStop.EarlyStopping(patience=10)
     #训练
@@ -71,18 +72,19 @@ def train(batch_size,lr,basepath,epoch,valid=True):
                 img = img.cuda(non_blocking=True)
                 time = time.cuda(non_blocking=True)
                 weather = weather.cuda(non_blocking=True)
-            pre_wea, pre_time = model(img)
-            weather_loss = criterion(pre_wea, weather)
-            time_loss = criterion(pre_time, time)
+            with autocast():
+                pre_wea, pre_time = model(img)
+                weather_loss = criterion(pre_wea, weather)
+                time_loss = criterion(pre_time, time)
 
-            optimizer.zero_grad()  # 清空梯度
+                optimizer.zero_grad()  # 清空梯度
 
-            # 通过指数函数，保证w1和w2一直为正数。
-            w1_pos = torch.exp(w1)
-            w2_pos = torch.exp(w2)
+                # 通过指数函数，保证w1和w2一直为正数。
+                w1_pos = torch.exp(w1)
+                w2_pos = torch.exp(w2)
 
-            # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
-            loss = w1_pos * weather_loss + w2_pos * time_loss +(weather_loss-time_loss)**2 +(1/w1_pos)+(1/w2_pos) # 取两者loss之和，作为损失函数
+                # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
+                loss = w1_pos * weather_loss + w2_pos * time_loss +(weather_loss-time_loss)**2 +(1/w1_pos)+(1/w2_pos) # 取两者loss之和，作为损失函数
             # loss = weather_loss + 1.5* time_loss
             # weather_loss=weather_loss/(weather_loss.detach()+time_loss.detach())
             # time_loss=time_loss/(weather_loss.detach()+time_loss.detach())
@@ -90,8 +92,11 @@ def train(batch_size,lr,basepath,epoch,valid=True):
             # print(soft_loss)
             # #log负数尽量大，从而loss足够小，通过负倒数
             # loss =- 1/((1 / 2) * (torch.log(soft_loss[0]) + torch.log(soft_loss[1])))
-            loss.backward()  # 损失函数对参数求偏导（反向传播
-            optimizer.step()  # 更新参数
+            # loss.backward()  # 损失函数对参数求偏导（反向传播
+            # optimizer.step()  # 更新参数
+            scaler.scale(loss).backward()  # AMP损失函数对参数求偏导（反向传播
+            scaler.step(optimizer)  # AMP更新参数
+            scaler.update()
             if iteration%20==0:
                 print("weather_loss:{0},time_loss:{1}\n".format(weather_loss, time_loss))
 

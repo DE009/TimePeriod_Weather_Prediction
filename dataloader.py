@@ -67,7 +67,6 @@ def dataset_load(basepath,batch_size):
     labels=labels.sample(frac=1.0)
     train_labels=labels.iloc[:int(0.8*len(labels))]
     valid_labels = labels.iloc[-int(0.2 * len(labels)):]
-    # dataset=WeatherData(labels,basepath,train=True)
     train_set=WeatherData(train_labels,basepath,train=True)
     valid_set=WeatherData(valid_labels,basepath,train=False)
     #生成训练和验证集，用random_split函数
