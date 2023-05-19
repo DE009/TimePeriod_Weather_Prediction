@@ -13,8 +13,8 @@ import  time as tm
 from matplotlib import pyplot as plt
 matplotlib.use('TkAgg')
 
-batch_size=16
-learning_rate=0.008 #last_best:0.005,80
+batch_size=64
+learning_rate=0.003 #last_best:0.005,80
 basepath='../data/train_dataset/'
 epoch=90
 
@@ -195,6 +195,6 @@ def train(batch_size,lr,basepath,epoch,valid=True):
 
 if __name__ == '__main__':
     freeze_support()
-    train(batch_size,learning_rate,basepath,epoch,valid=False)
+    train(batch_size,learning_rate,basepath,epoch,valid=True)
 
 
