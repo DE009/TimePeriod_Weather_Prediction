@@ -21,19 +21,20 @@ epoch=90
 def train(batch_size,lr,basepath,epoch,valid=True):
     #定义模型、参数、优化器、loss函数
     # 定义权重为可学习的权重
-    w1 = torch.tensor(1.0, requires_grad=True)
-    w2 = torch.tensor(1.0, requires_grad=True)
+    w1 = torch.tensor(1.0, requires_grad=True,device=torch.device('cuda'))
+    w2 = torch.tensor(1.0, requires_grad=True,device=torch.device('cuda'))
     model = weather_model.WeatherModelRes18DeepFc()
     criterion = nn.CrossEntropyLoss()
-    # 将模型参数和权重参数放入优化器
-    optimizer = optim.SGD([
-        {'params': model.parameters(), },
-       {'params': [w1, w2], }
-    ], lr=lr)
+
     #模型放入GPU
     if torch.cuda.is_available():
         model = model.cuda()
         criterion = criterion.cuda()
+    # 将模型参数和权重参数放入优化器
+    optimizer = optim.SGD([
+        {'params': model.parameters(), },
+        {'params': [w1, w2], }
+    ], lr=lr)
 
 
     # 获取数据
@@ -92,8 +93,10 @@ def train(batch_size,lr,basepath,epoch,valid=True):
             # print(soft_loss)
             # #log负数尽量大，从而loss足够小，通过负倒数
             # loss =- 1/((1 / 2) * (torch.log(soft_loss[0]) + torch.log(soft_loss[1])))
+            #正常优化
             # loss.backward()  # 损失函数对参数求偏导（反向传播
             # optimizer.step()  # 更新参数
+            #AMP优化
             scaler.scale(loss).backward()  # AMP损失函数对参数求偏导（反向传播
             scaler.step(optimizer)  # AMP更新参数
             scaler.update()
@@ -117,15 +120,16 @@ def train(batch_size,lr,basepath,epoch,valid=True):
                     img = img.cuda(non_blocking=True)
                     time = time.cuda(non_blocking=True)
                     weather = weather.cuda(non_blocking=True)
-                pre_wea, pre_time = model(img)
+                with autocast():
+                    pre_wea, pre_time = model(img)
 
-                weather_loss = criterion(pre_wea, weather)
-                time_loss = criterion(pre_time, time)
-                # #取w1，w2数值（并非tensor）计算总loss
-                w1_pos = np.exp(w1.item())
-                w2_pos = np.exp(w2.item())
-                # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
-                loss = w1_pos * weather_loss + w2_pos * time_loss + (weather_loss - time_loss) ** 2 +(1/w1_pos)+(1/w2_pos)  # 取两者loss之和，作为损失函数
+                    weather_loss = criterion(pre_wea, weather)
+                    time_loss = criterion(pre_time, time)
+                    # #取w1，w2数值（并非tensor）计算总loss
+                    w1_pos = np.exp(w1.item())
+                    w2_pos = np.exp(w2.item())
+                    # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
+                    loss = w1_pos * weather_loss + w2_pos * time_loss + (weather_loss - time_loss) ** 2 +(1/w1_pos)+(1/w2_pos)  # 取两者loss之和，作为损失函数
 
                 #用softmax来规定范围到0-1
                 # weather_loss = weather_loss / (weather_loss.detach() + time_loss.detach())
