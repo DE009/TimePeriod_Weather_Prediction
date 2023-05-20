@@ -81,10 +81,10 @@ class kmeans():
                 test_loader = DataLoader(test_dataset, batch_size=self.batch_size)
                 loaders.append([test_loader])
         return loaders
-test =kmeans(basepath='../data/train_dataset/',batch_size=64,)
-loader=test.get_dataloader()
-print(loader)
-
-test1 =kmeans(basepath=r"..\data\test_dataset/",batch_size=64,test=True)
-loader1=test1.get_dataloader()
-print(loader1)
+# test =kmeans(basepath='../data/train_dataset/',batch_size=64,)
+# loader=test.get_dataloader()
+# print(loader)
+#
+# test1 =kmeans(basepath=r"..\data\test_dataset/",batch_size=64,test=True)
+# loader1=test1.get_dataloader()
+# print(loader1)

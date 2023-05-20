@@ -11,6 +11,9 @@ import dataloader,weather_model
 import matplotlib
 import  time as tm
 from matplotlib import pyplot as plt
+
+import kmeans
+
 matplotlib.use('TkAgg')
 
 batch_size=64
@@ -18,7 +21,7 @@ learning_rate=0.00001     #last_best:0.005,80
 basepath='../data/train_dataset/'
 epoch=150
 
-def train(batch_size,lr,basepath,epoch,valid=True):
+def train(lr,epoch,train_loader,valid_loader,valid=True):
     #定义模型、参数、优化器、loss函数
     # 定义权重为可学习的权重
     # w1 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
@@ -44,7 +47,7 @@ def train(batch_size,lr,basepath,epoch,valid=True):
 
 
     # 获取数据
-    train_loader, valid_loader, = dataloader.dataset_load(basepath=basepath, batch_size=batch_size)
+    # train_loader, valid_loader, = dataloader.dataset_load(basepath=basepath, batch_size=batch_size)
 
 
     #初始化loss记录
@@ -223,6 +226,9 @@ def train(batch_size,lr,basepath,epoch,valid=True):
 
 if __name__ == '__main__':
     freeze_support()
-    train(batch_size,learning_rate,basepath,epoch,valid=True)
+    kmeans_cla=kmeans.kmeans(basepath=basepath,batch_size=batch_size)
+    loaders=kmeans_cla.get_dataloader()
+    for loader in loaders:
+        train(learning_rate,epoch,train_loader=loader[0],valid_loader=loader[1],valid=True)
 
 
