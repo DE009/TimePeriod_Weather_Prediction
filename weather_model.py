@@ -18,7 +18,32 @@ class WeatherModelRes18(nn.Module):
         weather=self.weather(out)
         time=self.time(out)
         return weather,time
+class WeatherModelRes50DeepFc(nn.Module):
+    def __init__(self):
+        super(WeatherModelRes50DeepFc,self).__init__()
+        # res=resnet18()
+        res=resnet50()
+        res.fc=nn.Identity()    #恒等函数，即该层fc不做变化，（等会可以输出网络结构看看）
+        self.res=res
+        self.weather=nn.Sequential(
+            nn.Linear(2048,512),
+            nn.Linear(512, 128),   #['Cloudy', 'Rainy', 'Sunny']
+            nn.Linear(128,32),
+            nn.Linear(32,3)
+        )
 
+        self.time=nn.Sequential(
+            nn.Linear(2048, 512),
+            nn.Linear(512,128),
+            nn.Linear(128, 32),  # ['Afternoon', 'Dawn', 'Dusk', 'Morning']
+            nn.Linear(32,4)
+        )
+
+    def forward(self,x):
+        out=self.res(x)
+        weather=self.weather(out)
+        time=self.time(out)
+        return weather,time
 class WeatherModelRes18DeepFc(nn.Module):
     def __init__(self):
         super(WeatherModelRes18DeepFc,self).__init__()

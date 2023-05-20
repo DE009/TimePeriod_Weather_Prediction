@@ -4,6 +4,8 @@ from torch.utils.data import  DataLoader,Dataset
 import  json
 import pandas as pd
 from PIL import Image
+
+from sklearn.model_selection import train_test_split
 import os
 #超参数定义
 # basepath='./data/train_dataset/'
@@ -20,19 +22,20 @@ class WeatherData(Dataset):
         self.period = pd.get_dummies(labels['period']).columns
         self.weather = pd.get_dummies(labels['weather']).columns
         #定义数据预处理
+            #修改为随机裁切
         self.train_transform=transforms.Compose([
             transforms.Resize(size=(340,340)),
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(20),
             transforms.RandomVerticalFlip(),
-            transforms.CenterCrop(size=(224,224)),
+            transforms.RandomCrop(size=(224,224)),
             transforms.ToTensor(),
             # transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
             transforms.Normalize([-0.1827,  0.1232,  0.2797],[0.9050, 0.9716, 1.0666]),
         ])
         self.valid_transform=transforms.Compose([
             transforms.Resize(size=(340,340)),
-            transforms.CenterCrop(size=(224,224)),
+            transforms.RandomCrop(size=(224,224)),
             transforms.ToTensor(),
             # transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
             transforms.Normalize([-0.1827, 0.1232, 0.2797], [0.9050, 0.9716, 1.0666]),
@@ -64,9 +67,10 @@ def dataset_load(basepath,batch_size):
         data=json.load(f)
     labels=pd.DataFrame(data['annotations'])
     #随机打乱labels，保证切分的数据是随机，但不重叠的
-    labels=labels.sample(frac=1.0)
-    train_labels=labels.iloc[:int(0.8*len(labels))]
-    valid_labels = labels.iloc[-int(0.2 * len(labels)):]
+    # labels=labels.sample(frac=1.0)
+    # train_labels=labels.iloc[:int(0.8*len(labels))]
+    # valid_labels = labels.iloc[-int(0.2 * len(labels)):]
+    train_labels, valid_labels= train_test_split(labels, test_size=0.2)
     train_set=WeatherData(train_labels,basepath,train=True)
     valid_set=WeatherData(valid_labels,basepath,train=False)
     #生成训练和验证集，用random_split函数
