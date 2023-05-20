@@ -60,12 +60,30 @@ class WeatherData(Dataset):
     #返回数据集长度
     def __len__(self):
         return len(self.labels)
-
-def dataset_load(basepath,batch_size):
+#读取所有的图像labels
+def trian_labels_load(train_basepath):
     #数据读入
-    with open(basepath+"train.json",'r') as f:
+    with open(train_basepath+"train.json",'r') as f:
         data=json.load(f)
     labels=pd.DataFrame(data['annotations'])
+    return labels
+def test_labels_load(test_basepath):
+    test_data = []
+    for root, dirs, files in os.walk(test_basepath + r"\test_images"):
+        for file in ["test_images\\" + x for x in files]:
+            tmp = {
+                "filename": file,
+                "period": "",
+                "weather": "",
+            }
+            test_data.append(tmp)
+    test_data_pd = pd.DataFrame(test_data)
+    return test_data_pd
+
+def dataset_load(basepath,batch_size,labels=None):
+    #若自定义labels，则使用。否则就读取所有labels
+    if labels is None:
+        labels=trian_labels_load(basepath)
     #随机打乱labels，保证切分的数据是随机，但不重叠的
     # labels=labels.sample(frac=1.0)
     # train_labels=labels.iloc[:int(0.8*len(labels))]

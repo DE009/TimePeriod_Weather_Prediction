@@ -4,23 +4,15 @@ from torch.utils.data import DataLoader
 import torch,os,json
 import pandas as pd
 batch_size=4
-basepath=r"..\data\test_dataset/"
+basepath= r"..\data\test_dataset/"
 #获取onehot还原对应表
 train_loader,valid_loader=dataloader.dataset_load(basepath='../data/train_dataset/',batch_size=batch_size)
 weather_onehot=train_loader.dataset.weather
 period_onehot=train_loader.dataset.period
 
 #遍历test数据集，生成初始数据
-test_data=[]
-for root,dirs,files in os.walk(basepath+r"\test_images"):
-    for file in ["test_images\\" + x for x in files]:
-        tmp={
-            "filename": file,
-            "period": "",
-            "weather": "",
-        }
-        test_data.append(tmp)
-test_data_pd=pd.DataFrame(test_data)
+test_data_pd=dataloader.test_labels_load(basepath)
+test_data=test_data_pd.to_dict(orient = 'records')
 test_dataset=dataloader.WeatherData(test_data_pd, basepath=basepath, train=False)
 test_loader=DataLoader(test_dataset,batch_size=batch_size)
 

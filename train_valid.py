@@ -21,8 +21,8 @@ epoch=150
 def train(batch_size,lr,basepath,epoch,valid=True):
     #定义模型、参数、优化器、loss函数
     # 定义权重为可学习的权重
-    w1 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
-    w2 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
+    # w1 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
+    # w2 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
     model = weather_model.WeatherModelRes18DeepFc()
     # model=weather_model.WeatherModelRes50DeepFcse()
     criterion = nn.CrossEntropyLoss()
