@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 matplotlib.use('TkAgg')
 
 batch_size=64
-learning_rate=0.0001     #last_best:0.005,80
+learning_rate=0.00001     #last_best:0.005,80
 basepath='../data/train_dataset/'
 epoch=150
 
@@ -24,7 +24,7 @@ def train(batch_size,lr,basepath,epoch,valid=True):
     w1 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
     w2 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
     model = weather_model.WeatherModelRes18DeepFc()
-    # model=weather_model.WeatherModelRes50DeepFc()
+    # model=weather_model.WeatherModelRes50DeepFcse()
     criterion = nn.CrossEntropyLoss()
 
     #模型放入GPU
@@ -44,10 +44,7 @@ def train(batch_size,lr,basepath,epoch,valid=True):
 
 
     # 获取数据
-    train_loader, \
-    valid_loader,\
-    train_set,\
-    valid_set = dataloader.dataset_load(basepath=basepath, batch_size=batch_size)
+    train_loader, valid_loader, = dataloader.dataset_load(basepath=basepath, batch_size=batch_size)
 
 
     #初始化loss记录
@@ -64,16 +61,16 @@ def train(batch_size,lr,basepath,epoch,valid=True):
     scaler=GradScaler()
 
     #初始化早停工具类
-    early_stop=EarlyStop.EarlyStopping(patience=10)
+    early_stop=EarlyStop.EarlyStopping(patience=15)
     #训练
     starttime = tm.time()
     for i in range(epoch):
         model.train()
-        iteration=0
+        train_iteration=0
         start=tm.time()
         print("training")
         for img, time, weather in train_loader:
-            if iteration==0:
+            if train_iteration==0:
                 end=tm.time()
             #数据放入GPU
             if torch.cuda.is_available():
@@ -94,7 +91,7 @@ def train(batch_size,lr,basepath,epoch,valid=True):
                 # # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
                 # loss = w1_pos * weather_loss + w2_pos * time_loss +(weather_loss-time_loss)**2 +(1/w1_pos)+(1/w2_pos) # 取两者loss之和，作为损失函数
 
-                loss=torch.sqrt(weather_loss*time_loss)
+                loss=torch.sqrt(weather_loss*time_loss)*time_loss
 
                 # soft_loss=torch.softmax(torch.tensor([weather_loss,time_loss],requires_grad=True),dim=0).cuda()
                 # print(soft_loss)
@@ -107,10 +104,10 @@ def train(batch_size,lr,basepath,epoch,valid=True):
             scaler.scale(loss).backward()  # AMP损失函数对参数求偏导（反向传播
             scaler.step(optimizer)  # AMP更新参数
             scaler.update()
-            if iteration%20==0:
+            if train_iteration%20==0:
                 print("weather_loss:{0},time_loss:{1}\n".format(weather_loss, time_loss))
 
-            iteration+=1
+            train_iteration+=1
             #记录本次迭代的loss
             train_losses['total'].append(loss.item())
             train_losses['weather'].append(weather_loss.item())
@@ -122,6 +119,7 @@ def train(batch_size,lr,basepath,epoch,valid=True):
             model.eval()
             wea_acc = 0
             time_acc = 0
+            valid_iteration=0
             for img, time, weather in valid_loader:
                 if torch.cuda.is_available():
                     img = img.cuda(non_blocking=True)
@@ -157,17 +155,18 @@ def train(batch_size,lr,basepath,epoch,valid=True):
                 valid_losses['total'].append(loss.item())
                 valid_losses['weather'].append(weather_loss.item())
                 valid_losses['time'].append(time_loss.item())
+                valid_iteration+=1
 
             # 注：len(dataLoader) dataloader的长度，是指，当前dataset，在指定的batchsize下，可被分成多少个batch，这里的长度的batch的数量。
-            print("wea_acc={:6f},time_acc={:6f}".format(wea_acc / len(valid_set), time_acc / len(valid_set)))
+            print("wea_acc={:6f},time_acc={:6f}".format(wea_acc / len(valid_loader.dataset), time_acc / len(valid_loader.dataset)))
         end3=tm.time()
 
         print("load time[{:3f}],trian time [{:3f}] ,valid time[{:3f}]".format(end - start, end2 - end,end3-end2))
         #itertation 等于(math.floor(len(train_set)/batch_size)+1)
-        train_epoch_loss=np.average(train_losses['total'][-iteration:])
-
+        train_epoch_loss=np.average(train_losses['total'][-train_iteration:])
+        #valid_iteration 等于(math.floor(len(valid_set)/batch_size)+1)
         if valid or (i+1)==epoch :
-            valid_epoch_loss = np.average(valid_losses['total'][-(math.floor(len(valid_set)/batch_size)+1):])
+            valid_epoch_loss = np.average(valid_losses['total'][-valid_iteration:])
             print(
                 "epoch[{0}/{1}]----train_loss:[{2}]----valid_loss:[{3}]"
                 .format(i,epoch,train_epoch_loss,valid_epoch_loss)
@@ -190,7 +189,7 @@ def train(batch_size,lr,basepath,epoch,valid=True):
     endtime = tm.time()
     print('time elapse{0}'.format(endtime-starttime))
     #增加loss per epoch 的曲线绘制。
-    avg_train_loss=[np.average(train_losses['total'][i*iteration:(i+1)*iteration]) for i in range(epoch)]
+    avg_train_loss=[np.average(train_losses['total'][i*train_iteration:(i+1)*train_iteration]) for i in range(epoch)]
     plt.plot(avg_train_loss,label='train_loss_per_epoch')
     plt.xlabel('epoch')
     plt.ylabel('epoch_loss')
@@ -198,7 +197,6 @@ def train(batch_size,lr,basepath,epoch,valid=True):
     plt.show()
 
     # 增加loss per epoch 的曲线绘制。
-    valid_iteration=(math.floor(len(valid_set)/batch_size)+1)
     avg_valid_loss = [np.average(valid_losses['total'][i * valid_iteration:(i + 1) * valid_iteration]) for i in range(epoch)]
     plt.plot(avg_valid_loss, label='valid_loss_per_epoch')
     plt.xlabel('epoch')

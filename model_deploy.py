@@ -6,9 +6,9 @@ import pandas as pd
 batch_size=4
 basepath=r"..\data\test_dataset/"
 #获取onehot还原对应表
-train_loader,valid_loader,train_set,valid_set=dataloader.dataset_load(basepath='../data/train_dataset/',batch_size=batch_size)
-weather_onehot=train_set.weather
-period_onehot=train_set.period
+train_loader,valid_loader=dataloader.dataset_load(basepath='../data/train_dataset/',batch_size=batch_size)
+weather_onehot=train_loader.dataset.weather
+period_onehot=train_loader.dataset.period
 
 #遍历test数据集，生成初始数据
 test_data=[]

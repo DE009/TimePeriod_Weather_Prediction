@@ -21,7 +21,6 @@ class WeatherModelRes18(nn.Module):
 class WeatherModelRes50DeepFc(nn.Module):
     def __init__(self):
         super(WeatherModelRes50DeepFc,self).__init__()
-        # res=resnet18()
         res=resnet50()
         res.fc=nn.Identity()    #恒等函数，即该层fc不做变化，（等会可以输出网络结构看看）
         self.res=res

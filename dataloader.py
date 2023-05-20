@@ -77,4 +77,4 @@ def dataset_load(basepath,batch_size):
     # train_set,valid_set=torch.utils.data.random_split(dataset,[int(0.8*len(dataset)),int(0.2*len(dataset))])
     train_loader=DataLoader(train_set,batch_size=batch_size,shuffle=True,pin_memory=True,num_workers=8,persistent_workers=True)
     valid_loader=DataLoader(valid_set,batch_size=batch_size,shuffle=True,pin_memory=True,num_workers=8,persistent_workers=True)
-    return train_loader,valid_loader,train_set,valid_set
+    return train_loader,valid_loader
