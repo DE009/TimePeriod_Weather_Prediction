@@ -13,10 +13,10 @@ import  time as tm
 from matplotlib import pyplot as plt
 matplotlib.use('TkAgg')
 
-batch_size=64
-learning_rate=0.003 #last_best:0.005,80
+batch_size=32
+learning_rate=0.001 #last_best:0.005,80
 basepath='../data/train_dataset/'
-epoch=90
+epoch=100
 
 def train(batch_size,lr,basepath,epoch,valid=True):
     #定义模型、参数、优化器、loss函数
@@ -151,13 +151,12 @@ def train(batch_size,lr,basepath,epoch,valid=True):
 
             # 注：len(dataLoader) dataloader的长度，是指，当前dataset，在指定的batchsize下，可被分成多少个batch，这里的长度的batch的数量。
             print("wea_acc={:6f},time_acc={:6f}".format(wea_acc / len(valid_set), time_acc / len(valid_set)))
-            print(w1_pos,w2_pos)
 
-
-        train_epoch_loss=np.average(train_losses['total'][-(math.floor(len(train_set)/batch_size)+1):])
+        #itertation 等于(math.floor(len(train_set)/batch_size)+1)
+        train_epoch_loss=np.average(train_losses['total'][-iteration:])
 
         if valid or (i+1)==epoch :
-            valid_epoch_loss = np.average(valid_losses['total'][-(math.floor(len(valid_set) / batch_size)+1):])
+            valid_epoch_loss = np.average(valid_losses['total'][-iteration:])
             print(
                 "epoch[{0}/{1}]----train_loss:[{2}]----valid_loss:[{3}]"
                 .format(i,epoch,train_epoch_loss,valid_epoch_loss)
@@ -171,11 +170,22 @@ def train(batch_size,lr,basepath,epoch,valid=True):
                 "epoch[{0}/{1}]----train_loss:[{2}]----"
                 .format(i, epoch, train_epoch_loss)
             )
+    #增加参数，判断是否保存模型（待做）
     if valid:
         model.load_state_dict(torch.load('checkpoint.pt'))
-    torch.save(model.state_dict(),'model_'+str(valid_epoch_loss)+'.pth')
+        torch.save(model.state_dict(), 'model_' + str(early_stop.best_score) + '.pth')
+    else:
+        torch.save(model.state_dict(),'model_'+str(valid_epoch_loss)+'_no_valid.pth')
     endtime = tm.time()
     print('time elapse{0}'.format(endtime-starttime))
+    #增加loss per epoch 的曲线绘制。
+    avg_train_loss=[np.average(train_losses['total'][i*iteration:(i+1)*iteration]) for i in range(epoch)]
+    plt.plot(avg_train_loss)
+    plt.xlabel('epoch')
+    plt.ylabel('epoch_loss')
+    plt.legend()
+    plt.show()
+
     # 绘制train loss 曲线
     plt.plot(train_losses['total'], label='total')
     plt.plot(train_losses['weather'], label='weather_loss')
@@ -195,6 +205,6 @@ def train(batch_size,lr,basepath,epoch,valid=True):
 
 if __name__ == '__main__':
     freeze_support()
-    train(batch_size,learning_rate,basepath,epoch,valid=True)
+    train(batch_size,learning_rate,basepath,epoch,valid=False)
 
 
