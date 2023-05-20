@@ -13,8 +13,8 @@ import  time as tm
 from matplotlib import pyplot as plt
 matplotlib.use('TkAgg')
 
-batch_size=32
-learning_rate=0.0005     #last_best:0.005,80
+batch_size=64
+learning_rate=0.0001     #last_best:0.005,80
 basepath='../data/train_dataset/'
 epoch=150
 
@@ -32,10 +32,15 @@ def train(batch_size,lr,basepath,epoch,valid=True):
         model = model.cuda()
         criterion = criterion.cuda()
     # 将模型参数和权重参数放入优化器
-    optimizer = optim.SGD([
+    # optimizer = optim.SGD([
+    #     {'params': model.parameters(), },
+    #     {'params': [w1, w2], }
+    # ], lr=lr)
+    optimizer = optim.Adam([
         {'params': model.parameters(), },
-        {'params': [w1, w2], }
+        # {'params': [w1, w2], }
     ], lr=lr)
+
 
 
     # 获取数据
@@ -82,19 +87,19 @@ def train(batch_size,lr,basepath,epoch,valid=True):
 
                 optimizer.zero_grad()  # 清空梯度
 
-                # 通过指数函数，保证w1和w2一直为正数。
-                w1_pos = torch.exp(w1)
-                w2_pos = torch.exp(w2)
+                # # 通过指数函数，保证w1和w2一直为正数。
+                # w1_pos = torch.exp(w1)
+                # w2_pos = torch.exp(w2)
+                #
+                # # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
+                # loss = w1_pos * weather_loss + w2_pos * time_loss +(weather_loss-time_loss)**2 +(1/w1_pos)+(1/w2_pos) # 取两者loss之和，作为损失函数
 
-                # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
-                loss = w1_pos * weather_loss + w2_pos * time_loss +(weather_loss-time_loss)**2 +(1/w1_pos)+(1/w2_pos) # 取两者loss之和，作为损失函数
-            # loss = weather_loss + 1.5* time_loss
-            # weather_loss=weather_loss/(weather_loss.detach()+time_loss.detach())
-            # time_loss=time_loss/(weather_loss.detach()+time_loss.detach())
-            # soft_loss=torch.softmax(torch.tensor([weather_loss,time_loss],requires_grad=True),dim=0)
-            # print(soft_loss)
-            # #log负数尽量大，从而loss足够小，通过负倒数
-            # loss =- 1/((1 / 2) * (torch.log(soft_loss[0]) + torch.log(soft_loss[1])))
+                loss=torch.sqrt(weather_loss*time_loss)
+
+                # soft_loss=torch.softmax(torch.tensor([weather_loss,time_loss],requires_grad=True),dim=0).cuda()
+                # print(soft_loss)
+                # #log负数尽量大，从而loss足够小，通过负倒数
+                # loss =- 1/((1 / 2) * (torch.log(soft_loss[0]) + torch.log(soft_loss[1])))
             #正常优化
             # loss.backward()  # 损失函数对参数求偏导（反向传播
             # optimizer.step()  # 更新参数
@@ -132,15 +137,15 @@ def train(batch_size,lr,basepath,epoch,valid=True):
                     # w1_pos = torch.exp(w1)
                     # w2_pos = torch.exp(w2)
                     # # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
-                    loss = w1_pos * weather_loss + w2_pos * time_loss + (weather_loss - time_loss) ** 2 +(1/w1_pos)+(1/w2_pos)  # 取两者loss之和，作为损失函数
-                    # loss =weather_loss+time_loss
+                    # loss = w1_pos * weather_loss + w2_pos * time_loss + (weather_loss - time_loss) ** 2 +(1/w1_pos)+(1/w2_pos)  # 取两者loss之和，作为损失函数
 
-                #用softmax来规定范围到0-1
-                # weather_loss = weather_loss / (weather_loss.detach() + time_loss.detach())
-                # time_loss = time_loss / (weather_loss.detach() + time_loss.detach())
-                # soft_loss=torch.softmax(torch.tensor([weather_loss,time_loss],requires_grad=True),dim=0)
-                # # log负数尽量大，从而loss足够小，通过负倒数
-                # loss = - 1 / ((1 / 2) * (torch.log(soft_loss[0]) + torch.log(soft_loss[1])))
+                    loss = torch.sqrt(weather_loss * time_loss)
+                    #用softmax来规定范围到0-1
+                    # weather_loss = weather_loss / (weather_loss.detach() + time_loss.detach())
+                    # time_loss = time_loss / (weather_loss.detach() + time_loss.detach())
+                    # soft_loss=torch.softmax(torch.tensor([weather_loss,time_loss],requires_grad=True),dim=0)
+                    # # log负数尽量大，从而loss足够小，通过负倒数
+                    # loss = - 1 / ((1 / 2) * (torch.log(soft_loss[0]) + torch.log(soft_loss[1])))
 
                 _, wea_idx = torch.max(pre_wea, 1)  # 统计每行最大值，获得下标index
                 _, time_idx = torch.max(pre_time, 1)
