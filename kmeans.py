@@ -19,7 +19,7 @@ import pandas as pd
 
 #测试：先过kmeans，然后不同的dataloader放到不同的模型里，预测结果保存到同一个文件中。
 class kmeans():
-    def __init__(self,basepath,batch_size,test=False,k=2):
+    def __init__(self,basepath,batch_size,test=False,train=True,k=2):
         self.batch_size=batch_size
         self.basepath=basepath
         if not test:
@@ -31,6 +31,7 @@ class kmeans():
         ])
         self.k=k
         self.is_test=test
+        self.is_train=train
     def images_load(self):
         all_images = []
         for idx,label in self.all_labels.iterrows():
@@ -39,6 +40,8 @@ class kmeans():
             img=self.transform(img)
             img=np.array(img)
             img =img.reshape(-1, )
+            #尝试使用方差聚类
+            img=[np.mean(img),np.std(img)]
             all_images.append(img)
         return all_images
     def train_save(self):
@@ -55,7 +58,7 @@ class kmeans():
         return k_labels
 
     def labels_class(self):
-        if not self.is_test:
+        if self.is_train:
             k_labels=self.train_save()
         else:
             k_labels=self.load_predict()

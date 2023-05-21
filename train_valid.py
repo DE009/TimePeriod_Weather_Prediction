@@ -19,8 +19,8 @@ matplotlib.use('TkAgg')
 batch_size=64
 learning_rate=0.00001     #last_best:0.005,80
 basepath='../data/train_dataset/'
-epoch=150
-
+# epoch=150
+epoch=10
 def train(lr,epoch,train_loader,valid_loader,valid=True):
     #定义模型、参数、优化器、loss函数
     # 定义权重为可学习的权重
@@ -183,52 +183,64 @@ def train(lr,epoch,train_loader,valid_loader,valid=True):
                 "epoch[{0}/{1}]----train_loss:[{2}]----"
                 .format(i, epoch, train_epoch_loss)
             )
-    #增加参数，判断是否保存模型（待做）
+    #若带早停，则从checkpoint获取最佳参数
     if valid:
         model.load_state_dict(torch.load('checkpoint.pt'))
-        torch.save(model.state_dict(), 'model_' + str(early_stop.best_score) + '.pth')
-    else:
-        torch.save(model.state_dict(),'model_'+str(valid_epoch_loss)+'_no_valid.pth')
     endtime = tm.time()
     print('time elapse{0}'.format(endtime-starttime))
     #增加loss per epoch 的曲线绘制。
     avg_train_loss=[np.average(train_losses['total'][i*train_iteration:(i+1)*train_iteration]) for i in range(epoch)]
+    plt.figure(1)
     plt.plot(avg_train_loss,label='train_loss_per_epoch')
     plt.xlabel('epoch')
     plt.ylabel('epoch_loss')
     plt.legend()
-    plt.show()
+    plt.savefig('train_loss_per_epoch.png')
+    # plt.show()
 
     # 增加loss per epoch 的曲线绘制。
+    plt.figure(2)
     avg_valid_loss = [np.average(valid_losses['total'][i * valid_iteration:(i + 1) * valid_iteration]) for i in range(epoch)]
     plt.plot(avg_valid_loss, label='valid_loss_per_epoch')
     plt.xlabel('epoch')
     plt.ylabel('epoch_loss')
     plt.legend()
-    plt.show()
+    plt.savefig('valid_loss_per_epoch.png')
+    # plt.show()
 
     # 绘制train loss 曲线
+    plt.figure(3)
     plt.plot(train_losses['total'], label='total')
     plt.plot(train_losses['weather'], label='weather_loss')
     plt.plot(train_losses['time'], label='time_loss')
     plt.xlabel('iteration')
     plt.ylabel('train_loss')
     plt.legend()
-    plt.show()
+    plt.savefig('train_loss_per_iteration.png')
+    # plt.show()
     # 绘制train loss 曲线
+    plt.figure(4)
     plt.plot(valid_losses['total'], label='loss')
     plt.plot(valid_losses['weather'], label='weather_loss')
     plt.plot(valid_losses['time'], label='time_loss')
     plt.xlabel('iteration')
     plt.ylabel('valid_loss')
     plt.legend()
+    plt.savefig('valid_loss_per_iteration.png')
     plt.show()
+    return model
 
 if __name__ == '__main__':
     freeze_support()
-    kmeans_cla=kmeans.kmeans(basepath=basepath,batch_size=batch_size)
+    kmeans_cla=kmeans.kmeans(basepath=basepath,batch_size=batch_size,train=True)
     loaders=kmeans_cla.get_dataloader()
-    for loader in loaders:
-        train(learning_rate,epoch,train_loader=loader[0],valid_loader=loader[1],valid=True)
+    del kmeans_cla
+    for idx,loader in enumerate(loaders):
+        model=train(learning_rate,epoch,train_loader=loader[0],valid_loader=loader[1],valid=True)
+        torch.save(model.state_dict(),'model_'+str(idx)+'_.pth')
+        del loader[1],loader[0]
+
+    # trian_loader,valid_loader=dataloader.dataset_load(basepath=basepath,batch_size=batch_size)
+    # train(learning_rate,epoch,train_loader=trian_loader,valid_loader=valid_loader,valid=True)
 
 
