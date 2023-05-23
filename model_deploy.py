@@ -9,7 +9,7 @@ import kmeans
 batch_size=4
 basepath= r"..\data\test_dataset/"
 
-def model_deploy(test_loader,c):
+def model_deploy(test_loader,c="all"):
     # 获取onehot还原对应表
     train_loader, valid_loader = dataloader.dataset_load(basepath='../data/train_dataset/', batch_size=batch_size)
     weather_onehot = train_loader.dataset.weather
@@ -50,21 +50,36 @@ def model_deploy(test_loader,c):
     print(test_data)
     return test_data
 
-#遍历test数据集，生成初始数据
-# test_data_pd=dataloader.test_labels_load(basepath)
-kmeans_cla = kmeans.kmeans(basepath=basepath, batch_size=batch_size, test=True)
-loaders = kmeans_cla.get_dataloader()
-del kmeans_cla
-result = {
+def deploy_kmeans():
+    kmeans_cla = kmeans.kmeans(basepath=basepath, batch_size=batch_size, test=True)
+    loaders = kmeans_cla.get_dataloader()
+    del kmeans_cla
+    result = {
         "annotations": []
     }
-for idx,loader in enumerate(loaders):
-    label=model_deploy(test_loader=loader[0],c=idx)
+    for idx, loader in enumerate(loaders):
+        label = model_deploy(test_loader=loader[0], c=idx)
+        for i in label:
+            result['annotations'].append(i)
+
+    with open('./result.json', 'w', encoding='utf-8') as fp:
+        json.dump(result, fp)
+def deploy():
+    result = {
+        "annotations": []
+    }
+
+    # 遍历test数据集，生成初始数据
+    test_labels=dataloader.test_labels_load(basepath)
+    test_set=dataloader.WeatherData(labels=test_labels,basepath=basepath,)
+    test_loader=DataLoader(test_set,batch_size=batch_size)
+    label = model_deploy(test_loader=test_loader)
     for i in label:
         result['annotations'].append(i)
-
-with open('./result.json', 'w', encoding='utf-8') as fp:
-    json.dump(result, fp)
+    with open('./result.json', 'w', encoding='utf-8') as fp:
+        json.dump(result, fp)
+if __name__ == '__main__':
+    deploy()
 
 
 

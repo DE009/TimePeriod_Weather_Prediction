@@ -61,6 +61,16 @@ class WeatherModelRes18DeepFc(nn.Module):
             nn.Linear(128, 32),  # ['Afternoon', 'Dawn', 'Dusk', 'Morning']
             nn.Linear(32,4)
         )
+        # self.weather = nn.Sequential(
+        #     nn.Linear(512, 256),
+        #     nn.Linear(256, 3), # ['Cloudy', 'Rainy', 'Sunny']
+        # )
+        #
+        # self.time = nn.Sequential(
+        #     nn.Linear(512, 256),
+        #     nn.Linear(64, 32),
+        #     nn.Linear(32, 4),# ['Afternoon', 'Dawn', 'Dusk', 'Morning']
+        # )
     def forward(self,x):
         out=self.res(x)
         weather=self.weather(out)

@@ -29,6 +29,10 @@ class WeatherData(Dataset):
             transforms.RandomRotation(20),
             transforms.RandomVerticalFlip(),
             transforms.RandomCrop(size=(224,224)),
+            # transforms.Resize(size=(224,224)),
+            # transforms.ColorJitter(
+            #      0.4, 0.4, 0.4, 0.4
+            # ),
             transforms.ToTensor(),
             # transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
             transforms.Normalize([-0.1827,  0.1232,  0.2797],[0.9050, 0.9716, 1.0666]),

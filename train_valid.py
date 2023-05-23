@@ -17,17 +17,17 @@ import kmeans
 matplotlib.use('TkAgg')
 
 batch_size=64
-learning_rate=0.00001     #last_best:0.005,80
+learning_rate=0.00001     #last_best:0.00001
 basepath='../data/train_dataset/'
-# epoch=150
-epoch=10
-def train(lr,epoch,train_loader,valid_loader,valid=True):
+epoch=200
+# epoch=10
+def train(lr,epoch,train_loader,valid_loader,c="all",valid=True):
     #定义模型、参数、优化器、loss函数
     # 定义权重为可学习的权重
-    # w1 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
-    # w2 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
+    w1 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
+    w2 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
     model = weather_model.WeatherModelRes18DeepFc()
-    # model=weather_model.WeatherModelRes50DeepFcse()
+    # model=weather_model.WeatherModelRes50DeepFc()
     criterion = nn.CrossEntropyLoss()
 
     #模型放入GPU
@@ -41,7 +41,7 @@ def train(lr,epoch,train_loader,valid_loader,valid=True):
     # ], lr=lr)
     optimizer = optim.Adam([
         {'params': model.parameters(), },
-        # {'params': [w1, w2], }
+        {'params': [w1, w2], }
     ], lr=lr)
 
 
@@ -87,14 +87,14 @@ def train(lr,epoch,train_loader,valid_loader,valid=True):
 
                 optimizer.zero_grad()  # 清空梯度
 
-                # # 通过指数函数，保证w1和w2一直为正数。
-                # w1_pos = torch.exp(w1)
-                # w2_pos = torch.exp(w2)
-                #
-                # # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
-                # loss = w1_pos * weather_loss + w2_pos * time_loss +(weather_loss-time_loss)**2 +(1/w1_pos)+(1/w2_pos) # 取两者loss之和，作为损失函数
+                # 通过指数函数，保证w1和w2一直为正数。
+                w1_pos = torch.exp(w1)
+                w2_pos = torch.exp(w2)
 
-                loss=torch.sqrt(weather_loss*time_loss)*time_loss
+                # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
+                loss = w1_pos * weather_loss + w2_pos * time_loss +(weather_loss-time_loss)**2 +(1/w1_pos)+(1/w2_pos) # 取两者loss之和，作为损失函数
+
+                # loss=torch.sqrt(weather_loss*time_loss)*2*time_loss
 
                 # soft_loss=torch.softmax(torch.tensor([weather_loss,time_loss],requires_grad=True),dim=0).cuda()
                 # print(soft_loss)
@@ -134,13 +134,13 @@ def train(lr,epoch,train_loader,valid_loader,valid=True):
 
                     weather_loss = criterion(pre_wea, weather)
                     time_loss = criterion(pre_time, time)
-                    # #取w1，w2数值（并非tensor）计算总loss
-                    # w1_pos = torch.exp(w1)
-                    # w2_pos = torch.exp(w2)
-                    # # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
-                    # loss = w1_pos * weather_loss + w2_pos * time_loss + (weather_loss - time_loss) ** 2 +(1/w1_pos)+(1/w2_pos)  # 取两者loss之和，作为损失函数
+                    #取w1，w2数值（并非tensor）计算总loss
+                    w1_pos = torch.exp(w1)
+                    w2_pos = torch.exp(w2)
+                    # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
+                    loss = w1_pos * weather_loss + w2_pos * time_loss + (weather_loss - time_loss) ** 2 +(1/w1_pos)+(1/w2_pos)  # 取两者loss之和，作为损失函数
 
-                    loss = torch.sqrt(weather_loss * time_loss)
+                    # loss = torch.sqrt(weather_loss * time_loss)
                     #用softmax来规定范围到0-1
                     # weather_loss = weather_loss / (weather_loss.detach() + time_loss.detach())
                     # time_loss = time_loss / (weather_loss.detach() + time_loss.detach())
@@ -195,7 +195,7 @@ def train(lr,epoch,train_loader,valid_loader,valid=True):
     plt.xlabel('epoch')
     plt.ylabel('epoch_loss')
     plt.legend()
-    plt.savefig('train_loss_per_epoch.png')
+    plt.savefig('train_loss_per_epoch_'+str(c)+'.png')
     # plt.show()
 
     # 增加loss per epoch 的曲线绘制。
@@ -205,7 +205,7 @@ def train(lr,epoch,train_loader,valid_loader,valid=True):
     plt.xlabel('epoch')
     plt.ylabel('epoch_loss')
     plt.legend()
-    plt.savefig('valid_loss_per_epoch.png')
+    plt.savefig('valid_loss_per_epoch_'+str(c)+'.png')
     # plt.show()
 
     # 绘制train loss 曲线
@@ -216,7 +216,7 @@ def train(lr,epoch,train_loader,valid_loader,valid=True):
     plt.xlabel('iteration')
     plt.ylabel('train_loss')
     plt.legend()
-    plt.savefig('train_loss_per_iteration.png')
+    plt.savefig('train_loss_per_iteration_'+str(c)+'.png')
     # plt.show()
     # 绘制train loss 曲线
     plt.figure(4)
@@ -226,21 +226,28 @@ def train(lr,epoch,train_loader,valid_loader,valid=True):
     plt.xlabel('iteration')
     plt.ylabel('valid_loss')
     plt.legend()
-    plt.savefig('valid_loss_per_iteration.png')
-    plt.show()
+    plt.savefig('valid_loss_per_iteration_'+str(c)+'.png')
+    # plt.show()
     return model
 
-if __name__ == '__main__':
-    freeze_support()
+def train_kmeans():
     kmeans_cla=kmeans.kmeans(basepath=basepath,batch_size=batch_size,train=True)
     loaders=kmeans_cla.get_dataloader()
     del kmeans_cla
     for idx,loader in enumerate(loaders):
-        model=train(learning_rate,epoch,train_loader=loader[0],valid_loader=loader[1],valid=True)
+        model=train(learning_rate,epoch,train_loader=loader[0],valid_loader=loader[1],valid=True,c=idx)
         torch.save(model.state_dict(),'model_'+str(idx)+'_.pth')
         del loader[1],loader[0]
+def train_plain():
 
-    # trian_loader,valid_loader=dataloader.dataset_load(basepath=basepath,batch_size=batch_size)
-    # train(learning_rate,epoch,train_loader=trian_loader,valid_loader=valid_loader,valid=True)
+    trian_loader,valid_loader=dataloader.dataset_load(basepath=basepath,batch_size=batch_size)
+    model=train(learning_rate,epoch,train_loader=trian_loader,valid_loader=valid_loader,valid=True)
+    torch.save(model.state_dict(), 'model_all_.pth')
+
+if __name__ == '__main__':
+    freeze_support()
+    train_plain()
+    # train_kmeans()
+
 
 

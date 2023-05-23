@@ -5,7 +5,7 @@ from sklearn.cluster import KMeans
 from PIL import Image
 from torch.utils.data import DataLoader
 from torchvision import transforms
-
+from skimage.feature import graycomatrix, graycoprops
 import dataloader
 import pandas as pd
 
@@ -38,10 +38,21 @@ class kmeans():
             filepath = self.basepath + label['filename']
             img = Image.open(filepath.replace("\\", "//"))
             img=self.transform(img)
+
+            # gray_image = np.array(img.convert('L'))
+            # glcm = graycomatrix(gray_image, distances=[5], angles=[0], levels=256,
+            #                     symmetric=True, normed=True)
+            # contrast = graycoprops(glcm, 'contrast')[0, 0]
+            # dissimilarity = graycoprops(glcm, 'dissimilarity')[0, 0]
+            # homogeneity = graycoprops(glcm, 'homogeneity')[0, 0]
+            # energy = graycoprops(glcm, 'energy')[0, 0]
+            # correlation = graycoprops(glcm, 'correlation')[0, 0]
+            # all_images.append([dissimilarity,homogeneity,energy,correlation])
+
             img=np.array(img)
             img =img.reshape(-1, )
             #尝试使用方差聚类
-            img=[np.mean(img),np.std(img)]
+            # img=[np.mean(img),np.std(img)]
             all_images.append(img)
         return all_images
     def train_save(self):
