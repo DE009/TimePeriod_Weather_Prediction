@@ -16,8 +16,9 @@ import kmeans
 
 matplotlib.use('TkAgg')
 
-batch_size=64
-learning_rate=0.00001     #last_best:0.00001
+batch_size=16
+learning_rate=0.00001     #last_best:0.00001,200
+# learning_rate=3e-4      #last_best:0.00001,200
 basepath='../data/train_dataset/'
 epoch=200
 # epoch=10
@@ -26,7 +27,8 @@ def train(lr,epoch,train_loader,valid_loader,c="all",valid=True):
     # 定义权重为可学习的权重
     w1 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
     w2 = torch.tensor(0.0, requires_grad=True,device=torch.device('cuda'))
-    model = weather_model.WeatherModelRes18DeepFc()
+    # model = weather_model.WeatherModelRes18DeepFc()
+    model = weather_model.WeatherModelRes34DeepFc()
     # model=weather_model.WeatherModelRes50DeepFc()
     criterion = nn.CrossEntropyLoss()
 
@@ -92,8 +94,9 @@ def train(lr,epoch,train_loader,valid_loader,c="all",valid=True):
                 w2_pos = torch.exp(w2)
 
                 # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
-                loss = w1_pos * weather_loss + w2_pos * time_loss +(weather_loss-time_loss)**2 +(1/w1_pos)+(1/w2_pos) # 取两者loss之和，作为损失函数
-
+                # loss = w1_pos * weather_loss + w2_pos * time_loss +(weather_loss-time_loss)**2 +(1/w1_pos)+(1/w2_pos) # 取两者loss之和，作为损失函数
+                loss = w1_pos * weather_loss + w2_pos * time_loss +torch.var(torch.Tensor([weather_loss,time_loss])) +(1/w1_pos)+(1/w2_pos) # 取两者loss之和，作为损失函数
+                # loss=weather_loss+time_loss
                 # loss=torch.sqrt(weather_loss*time_loss)*2*time_loss
 
                 # soft_loss=torch.softmax(torch.tensor([weather_loss,time_loss],requires_grad=True),dim=0).cuda()
@@ -138,8 +141,10 @@ def train(lr,epoch,train_loader,valid_loader,c="all",valid=True):
                     w1_pos = torch.exp(w1)
                     w2_pos = torch.exp(w2)
                     # loss加权和，权值为可学习参数，且加入倒数，防止权值太小。
-                    loss = w1_pos * weather_loss + w2_pos * time_loss + (weather_loss - time_loss) ** 2 +(1/w1_pos)+(1/w2_pos)  # 取两者loss之和，作为损失函数
-
+                    # loss = w1_pos * weather_loss + w2_pos * time_loss + (weather_loss - time_loss) ** 2 +(1/w1_pos)+(1/w2_pos)  # 取两者loss之和，作为损失函数
+                    loss = w1_pos * weather_loss + w2_pos * time_loss + torch.var(
+                        torch.Tensor([weather_loss, time_loss])) + (1 / w1_pos) + (1 / w2_pos)  # 取两者loss之和，作为损失函数
+                    # loss=weather_loss+time_loss
                     # loss = torch.sqrt(weather_loss * time_loss)
                     #用softmax来规定范围到0-1
                     # weather_loss = weather_loss / (weather_loss.detach() + time_loss.detach())

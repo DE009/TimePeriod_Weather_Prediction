@@ -6,7 +6,7 @@ import pandas as pd
 
 import kmeans
 
-batch_size=4
+batch_size=16
 basepath= r"..\data\test_dataset/"
 
 def model_deploy(test_loader,c="all"):
@@ -15,7 +15,8 @@ def model_deploy(test_loader,c="all"):
     weather_onehot = train_loader.dataset.weather
     period_onehot = train_loader.dataset.period
     #读取模型
-    model = weather_model.WeatherModelRes18DeepFc()
+    # model = weather_model.WeatherModelRes18DeepFc()
+    model=weather_model.WeatherModelRes50DeepFc()
     #读取test数据
     test_dataset = test_loader.dataset
     test_data = test_dataset.labels.to_dict(orient='records')
@@ -51,7 +52,8 @@ def model_deploy(test_loader,c="all"):
     return test_data
 
 def deploy_kmeans():
-    kmeans_cla = kmeans.kmeans(basepath=basepath, batch_size=batch_size, test=True)
+    #调用kmeans类，读取测试集，并关闭训练。
+    kmeans_cla = kmeans.kmeans(basepath=basepath, batch_size=batch_size, test=True,train=False)
     loaders = kmeans_cla.get_dataloader()
     del kmeans_cla
     result = {
@@ -80,6 +82,7 @@ def deploy():
         json.dump(result, fp)
 if __name__ == '__main__':
     deploy()
+    # deploy_kmeans()
 
 
 

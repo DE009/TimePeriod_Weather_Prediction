@@ -21,28 +21,24 @@ class WeatherData(Dataset):
         # 记录one-hot编码和类别的转换
         self.period = pd.get_dummies(labels['period']).columns
         self.weather = pd.get_dummies(labels['weather']).columns
+        # self.
         #定义数据预处理
             #修改为随机裁切
         self.train_transform=transforms.Compose([
             transforms.Resize(size=(340,340)),
+            transforms.RandomCrop(size=(224, 224)),
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(20),
             transforms.RandomVerticalFlip(),
-            transforms.RandomCrop(size=(224,224)),
-            # transforms.Resize(size=(224,224)),
-            # transforms.ColorJitter(
-            #      0.4, 0.4, 0.4, 0.4
-            # ),
             transforms.ToTensor(),
-            # transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
-            transforms.Normalize([-0.1827,  0.1232,  0.2797],[0.9050, 0.9716, 1.0666]),
+            transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
+
         ])
         self.valid_transform=transforms.Compose([
             transforms.Resize(size=(340,340)),
             transforms.RandomCrop(size=(224,224)),
             transforms.ToTensor(),
-            # transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
-            transforms.Normalize([-0.1827, 0.1232, 0.2797], [0.9050, 0.9716, 1.0666]),
+            transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
         ])
         self.basepath=basepath
     #返回数据，（img,period,weather）,按输入的index，返回一个数据以及对应的label
